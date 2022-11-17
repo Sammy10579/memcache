@@ -13,7 +13,7 @@ import (
 func main() {
 
 	if err := godotenv.Load(); err != nil {
-		log.Print("Np .env file found")
+		log.Print("No .env file found")
 	}
 
 	s := grpc.NewServer()
