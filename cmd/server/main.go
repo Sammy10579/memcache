@@ -1,11 +1,13 @@
 package main
 
 import (
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"log"
 	cache "memcache/api/proto"
 	"memcache/pkg/service"
+	"memcache/pkg/storage"
 	"net"
 	"os"
 )
@@ -16,9 +18,11 @@ func main() {
 		log.Print("No .env file found")
 	}
 
+	mc := memcache.New("localhost:11211")
+	st := storage.NewStorage(mc)
+	csrv := service.NewCacheServer(st)
 	s := grpc.NewServer()
-	srv := &service.CacheServer{}
-	cache.RegisterCacheServer(s, srv)
+	cache.RegisterCacheServer(s, csrv)
 
 	l, err := net.Listen("tcp", os.Getenv("PORT"))
 	if err != nil {

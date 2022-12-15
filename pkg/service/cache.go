@@ -2,48 +2,41 @@ package service
 
 import (
 	"context"
-	"errors"
 	"github.com/golang/protobuf/ptypes/empty"
 	cache "memcache/api/proto"
-	"sync"
 )
 
 type CacheServer struct {
-	mx sync.RWMutex
-	m  map[string]string
+	memCache Storage
 }
 
-func (c *CacheServer) Get(ctx context.Context, key *cache.Key) (*cache.Item, error) {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
+func NewCacheServer(st Storage) *CacheServer {
+	return &CacheServer{memCache: st}
+}
 
-	_, ok := c.m[key.Key]
-	if ok != true {
-		err := errors.New("no value for this key")
+func (c *CacheServer) Set(_ context.Context, item *cache.Item) (*empty.Empty, error) {
+	err := c.memCache.Set(item.Key, item.Value)
+	if err != nil {
 		return nil, err
 	}
-	a := cache.Item{Key: key.Key, Value: c.m[key.Key]}
-	return &a, nil
+	out := new(empty.Empty)
+	return out, err
 }
 
-func (c *CacheServer) Set(ctx context.Context, item *cache.Item) (*empty.Empty, error) {
-	c.mx.RLock()
-	defer c.mx.RLock()
-
-	if c.m == nil {
-		c.m = make(map[string]string)
+func (c *CacheServer) Get(_ context.Context, key *cache.Key) (*cache.Item, error) {
+	val, err := c.memCache.Get(key.Key)
+	if err != nil {
+		return nil, err
 	}
-
-	c.m[item.Key] = item.Value
-	out := new(empty.Empty)
-	return out, nil
+	item := cache.Item{Key: key.Key, Value: val}
+	return &item, err
 }
 
-func (c *CacheServer) Delete(ctx context.Context, key *cache.Key) (*empty.Empty, error) {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
-
-	delete(c.m, key.Key)
+func (c *CacheServer) Delete(_ context.Context, key *cache.Key) (*empty.Empty, error) {
+	err := c.memCache.Delete(key.Key)
+	if err != nil {
+		return nil, err
+	}
 	out := new(empty.Empty)
-	return out, nil
+	return out, err
 }

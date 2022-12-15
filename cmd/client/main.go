@@ -28,9 +28,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	fmt.Println(c.Set(ctx, &cache.Item{Key: "123", Value: "dfgjkng"}))
+	fmt.Println(c.Set(ctx, &cache.Item{Key: "1", Value: "value"}))
 
 	fmt.Println("-----")
 
-	fmt.Println(c.Get(ctx, &cache.Key{Key: "123"}))
+	fmt.Println(c.Get(ctx, &cache.Key{Key: "1"}))
 }
